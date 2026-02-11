@@ -73,19 +73,19 @@ EOT
     resource_group_name                                  = string
     security_style                                       = optional(string)
     tags                                                 = optional(map(string))
-    snapshot_directory_visible                           = optional(bool, true)
-    smb_non_browsable_enabled                            = optional(bool, false)
+    snapshot_directory_visible                           = optional(bool) # Default: true
+    smb_non_browsable_enabled                            = optional(bool) # Default: false
     smb_continuous_availability_enabled                  = optional(bool)
-    smb_access_based_enumeration_enabled                 = optional(bool, false)
+    smb_access_based_enumeration_enabled                 = optional(bool) # Default: false
     smb3_protocol_encryption_enabled                     = optional(bool)
     protocols                                            = optional(set(string))
     kerberos_enabled                                     = optional(bool)
-    large_volume_enabled                                 = optional(bool, false)
+    large_volume_enabled                                 = optional(bool) # Default: false
     key_vault_private_endpoint_id                        = optional(string)
     throughput_in_mibps                                  = optional(number)
     encryption_key_source                                = optional(string)
     create_from_snapshot_resource_id                     = optional(string)
-    azure_vmware_data_store_enabled                      = optional(bool, false)
+    azure_vmware_data_store_enabled                      = optional(bool) # Default: false
     accept_grow_capacity_pool_for_short_term_clone_split = optional(string)
     network_features                                     = optional(string)
     zone                                                 = optional(string)
@@ -97,10 +97,10 @@ EOT
     data_protection_backup_policy = optional(object({
       backup_policy_id = string
       backup_vault_id  = string
-      policy_enabled   = optional(bool, true)
+      policy_enabled   = optional(bool) # Default: true
     }))
     data_protection_replication = optional(object({
-      endpoint_type             = optional(string, "dst")
+      endpoint_type             = optional(string) # Default: "dst"
       remote_volume_location    = string
       remote_volume_resource_id = string
       replication_frequency     = string
