@@ -38,6 +38,13 @@ resource "azurerm_netapp_volume" "netapp_volumes" {
     }
   }
 
+  dynamic "data_protection_advanced_ransomware" {
+    for_each = each.value.data_protection_advanced_ransomware != null ? [each.value.data_protection_advanced_ransomware] : []
+    content {
+      protection_enabled = data_protection_advanced_ransomware.value.protection_enabled
+    }
+  }
+
   dynamic "data_protection_backup_policy" {
     for_each = each.value.data_protection_backup_policy != null ? [each.value.data_protection_backup_policy] : []
     content {
