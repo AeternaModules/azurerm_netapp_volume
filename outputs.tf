@@ -1,3 +1,7 @@
+output "netapp_volumes_id" {
+  description = "Map of id values across all netapp_volumes, keyed the same as var.netapp_volumes"
+  value       = { for k, v in azurerm_netapp_volume.netapp_volumes : k => v.id }
+}
 output "netapp_volumes_accept_grow_capacity_pool_for_short_term_clone_split" {
   description = "Map of accept_grow_capacity_pool_for_short_term_clone_split values across all netapp_volumes, keyed the same as var.netapp_volumes"
   value       = { for k, v in azurerm_netapp_volume.netapp_volumes : k => v.accept_grow_capacity_pool_for_short_term_clone_split }
