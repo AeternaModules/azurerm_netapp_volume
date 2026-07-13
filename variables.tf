@@ -75,19 +75,19 @@ EOT
     resource_group_name                                  = string
     security_style                                       = optional(string)
     tags                                                 = optional(map(string))
-    snapshot_directory_visible                           = optional(bool) # Default: true
-    smb_non_browsable_enabled                            = optional(bool) # Default: false
+    snapshot_directory_visible                           = optional(bool)
+    smb_non_browsable_enabled                            = optional(bool)
     smb_continuous_availability_enabled                  = optional(bool)
-    smb_access_based_enumeration_enabled                 = optional(bool) # Default: false
+    smb_access_based_enumeration_enabled                 = optional(bool)
     smb3_protocol_encryption_enabled                     = optional(bool)
     protocols                                            = optional(set(string))
     kerberos_enabled                                     = optional(bool)
-    large_volume_enabled                                 = optional(bool) # Default: false
+    large_volume_enabled                                 = optional(bool)
     key_vault_private_endpoint_id                        = optional(string)
     throughput_in_mibps                                  = optional(number)
     encryption_key_source                                = optional(string)
     create_from_snapshot_resource_id                     = optional(string)
-    azure_vmware_data_store_enabled                      = optional(bool) # Default: false
+    azure_vmware_data_store_enabled                      = optional(bool)
     accept_grow_capacity_pool_for_short_term_clone_split = optional(string)
     network_features                                     = optional(string)
     zone                                                 = optional(string)
@@ -102,10 +102,10 @@ EOT
     data_protection_backup_policy = optional(object({
       backup_policy_id = string
       backup_vault_id  = string
-      policy_enabled   = optional(bool) # Default: true
+      policy_enabled   = optional(bool)
     }))
     data_protection_replication = optional(object({
-      endpoint_type             = optional(string) # Default: "dst"
+      endpoint_type             = optional(string)
       remote_volume_location    = string
       remote_volume_resource_id = string
       replication_frequency     = string
@@ -137,46 +137,6 @@ EOT
     ])
     error_message = "Each export_policy_rule list must contain at most 5 items"
   }
-  validation {
-    condition = alltrue([
-      for k, v in var.netapp_volumes : (
-        v.zone == null || (length(v.zone) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.netapp_volumes : (
-        v.storage_quota_in_gb >= 50 && v.storage_quota_in_gb <= 1048576
-      )
-    ])
-    error_message = "must be between 50 and 1048576"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.netapp_volumes : (
-        v.data_protection_replication == null || (v.data_protection_replication.endpoint_type == null || (contains(["dst"], v.data_protection_replication.endpoint_type)))
-      )
-    ])
-    error_message = "must be one of: dst"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.netapp_volumes : (
-        v.data_protection_replication == null || (contains(["10minutes", "daily", "hourly"], v.data_protection_replication.replication_frequency))
-      )
-    ])
-    error_message = "must be one of: 10minutes, daily, hourly"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.netapp_volumes : (
-        v.cool_access == null || (v.cool_access.coolness_period_in_days >= 2 && v.cool_access.coolness_period_in_days <= 183)
-      )
-    ])
-    error_message = "must be between 2 and 183"
-  }
   # --- Unconfirmed validation candidates, derived from azurerm_netapp_volume's provider source ---
   # Not auto-enabled: either a bespoke provider validator we can't safely translate,
   # or a path that crosses a list-typed block (needs its own for_each wrapping).
@@ -199,6 +159,9 @@ EOT
   #   source:    [from netAppValidate.VolumeName] !regexp.MustCompile(`^[a-zA-Z][-_\da-zA-Z]{0,63}$`).MatchString(value)
   # path: location
   #   source:    location.EnhancedValidate: no recognizable `if ... { errors = append(...) }` pattern - read it by hand
+  # path: zone
+  #   condition: length(value) > 0
+  #   message:   must not be empty
   # path: account_name
   #   source:    [from netAppValidate.AccountName] !regexp.MustCompile(`^[-_\da-zA-Z]{3,64}$`).MatchString(value)
   # path: pool_name
@@ -224,6 +187,9 @@ EOT
   #   message:   must be one of: NFSv3, NFSv4.1, CIFS
   # path: security_style
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: storage_quota_in_gb
+  #   condition: value >= 50 && value <= 1048576
+  #   message:   must be between 50 and 1048576
   # path: throughput_in_mibps
   #   source:    validation.FloatAtLeast(...) - no translation rule yet, add one
   # path: export_policy_rule.rule_index
@@ -248,12 +214,18 @@ EOT
   #   condition: length(value) <= 256
   #   message:   [from tags.Validate: invalid when len(value) > 256]
   #   source:    [from tags.Validate: invalid when len(value) > 256]
+  # path: data_protection_replication.endpoint_type
+  #   condition: contains(["dst"], value)
+  #   message:   must be one of: dst
   # path: data_protection_replication.remote_volume_location
   #   source:    location.EnhancedValidate: no recognizable `if ... { errors = append(...) }` pattern - read it by hand
   # path: data_protection_replication.remote_volume_resource_id
   #   source:    [from azure.ValidateResourceID] !ok
   # path: data_protection_replication.remote_volume_resource_id
   #   source:    [from azure.ValidateResourceID] err != nil
+  # path: data_protection_replication.replication_frequency
+  #   condition: contains(["10minutes", "daily", "hourly"], value)
+  #   message:   must be one of: 10minutes, daily, hourly
   # path: data_protection_snapshot_policy.snapshot_policy_id
   #   source:    [from azure.ValidateResourceID] !ok
   # path: data_protection_snapshot_policy.snapshot_policy_id
@@ -276,5 +248,8 @@ EOT
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
   # path: cool_access.tiering_policy
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: cool_access.coolness_period_in_days
+  #   condition: value >= 2 && value <= 183
+  #   message:   must be between 2 and 183
 }
 
